@@ -106,6 +106,12 @@
     pendingFrame=video.requestVideoFrameCallback ?
       video.requestVideoFrameCallback(onFrame) : requestAnimationFrame(onFrame);
   }
+  function cancelFrame() {
+    if (pendingFrame===null) return;
+    if (video.cancelVideoFrameCallback) video.cancelVideoFrameCallback(pendingFrame);
+    else cancelAnimationFrame(pendingFrame);
+    pendingFrame=null;
+  }
   video.addEventListener('playing',()=>{waiting=false;sync();scheduleFrame();});
   video.addEventListener('waiting',()=>{waiting=true;sync();});
   video.addEventListener('seeking',()=>sync());
@@ -114,8 +120,9 @@
     if(video.readyState>=2) lastFrame=video.currentTime;
     sync();scheduleFrame();
   });
-  for(const event of ['pause','ended','timeupdate','loadeddata']) video.addEventListener(event,()=>sync());
-  video.addEventListener('emptied',()=>{lastFrame=0;waiting=false;sync();});
+  for(const event of ['pause','ended']) video.addEventListener(event,()=>{cancelFrame();sync();});
+  for(const event of ['timeupdate','loadeddata']) video.addEventListener(event,()=>sync());
+  video.addEventListener('emptied',()=>{cancelFrame();lastFrame=0;waiting=false;sync();});
   window.addEventListener('resize',positionCredit);
   window.DuoDisplay={sync,positionCredit,maskCapture};
   sync();
