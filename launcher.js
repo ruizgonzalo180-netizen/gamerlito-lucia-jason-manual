@@ -229,13 +229,13 @@
   }
   function fullscreenHelp(){
     const appleTouch=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-    let message='Abrí el enlace directamente en el navegador y volvé a tocar el botón de pantalla completa.';
+    let message='Open this link in your browser, then tap Full screen again.';
     if(appleTouch){
       message=navigator.standalone
-        ? 'Girá el dispositivo en horizontal para aprovechar toda la pantalla. iOS controla la visibilidad de la hora.'
-        : 'En Safari, tocá Compartir → Agregar a inicio y activá «Abrir como app web». Abrí Gamerlito desde ese ícono y girá el dispositivo en horizontal. iOS controla la visibilidad de la hora.';
+        ? 'Turn your device sideways to use the full screen. iOS controls whether the clock appears.'
+        : 'In Safari, tap Share, choose Add to Home Screen, and turn on Open as Web App. Open Gamerlito from your Home Screen and turn your device sideways. iOS controls whether the clock appears.';
     }
-    openModal('fullscreen-help','Pantalla completa','<p>'+message+'</p>');
+    openModal('fullscreen-help','Full screen','<p>'+message+'</p>');
   }
   async function enterFullscreen(showHelp){
     if(hasFullscreenElement()||fullDisplay.matches)return;

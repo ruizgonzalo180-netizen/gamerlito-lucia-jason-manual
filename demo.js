@@ -12,7 +12,7 @@
   actionHint.className = 'duo-action-hint';
   actionHint.setAttribute('aria-hidden','true');
   action.append(actionHint);
-  const labels = {aim:'Apuntar', fire:'Disparar', interact:'Interactuar', crouch:'Agacharse', drive:'Conducir', look:'Mirar', menu:'Seleccionar'};
+  const labels = {aim:'Aim', fire:'Fire', interact:'Interact', crouch:'Crouch', drive:'Drive', look:'Look', menu:'Select'};
   const buttons = {act:action, sprint:hud.querySelector('[data-gh="sprint"]'), jump:hud.querySelector('[data-gh="jump"]')};
   const segments = window.GAMERLITO_TIMELINE.segments;
   const neutral = [0,0,0,0,'idle'];
@@ -34,8 +34,8 @@
     const paused=window.Player.userPaused;
     if(playback.dataset.paused!==String(paused)) {
       playback.dataset.paused=String(paused);
-      playback.setAttribute('aria-label',paused?'Reanudar el clip':'Pausar el clip');
-      playback.title=paused?'Reanudar (P)':'Pausar (P)';
+      playback.setAttribute('aria-label',paused?'Resume playback':'Pause playback');
+      playback.title=paused?'Resume (P)':'Pause (P)';
     }
     if(!automatic) return;
     const active=window.Player.stage==='playing' && !window.Player.paused && !video.paused &&

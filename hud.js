@@ -167,8 +167,16 @@
     return '<h2>Report an issue</h2><form class="gh-report"><label>Category<select name="kind"><option>Playback</option><option>Controls</option><option>Interface</option></select></label><label>What happened?<textarea name="note" required maxlength="300" placeholder="Describe the issue"></textarea></label><p>Notes are saved on this device.</p><button type="submit" class="gh-action gh-primary">Save note</button></form>'+recent;
   }
   function help() {
-    const rows=[["Mover el encuadre","Joystick / WASD"],["Ir a la próxima toma","Acción / E"],["Avanzar 5 segundos","Flecha / Espacio"],["Acelerar","Corredor / Shift"],["Pausar o continuar","P"],["Repetir desde el inicio","R"],["Menú de Roblox","Esc"]];
-    if(document.body.dataset.duoMode==="manual") rows.splice(1,0,["Toma siguiente o anterior","Mantener ↑ o ↓"]);
+    const rows=[
+      ["Pan the view","Joystick or WASD"],
+      ["Skip to the next scene","Action button or E"],
+      ["Skip ahead 5 seconds","On-screen arrow or Space"],
+      ["Speed up playback","Hold the sprint button or Shift"],
+      ["Pause or resume","P"],
+      ["Restart the clip","R"],
+      ["Open the Roblox menu","Esc"]
+    ];
+    if(document.body.dataset.duoMode==="manual") rows.splice(1,0,["Next or previous scene","Hold the joystick up or down"]);
 
     return '<h2>Controls</h2>'+rows.map(([name,key])=>'<div class="gh-row"><span>'+name+'</span><span class="gh-key">'+key+'</span></div>').join("");
   }

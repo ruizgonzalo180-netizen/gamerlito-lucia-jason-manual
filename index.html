@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -8,10 +8,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Gamerlito · Lucía y Jason · Manual">
+  <meta name="apple-mobile-web-app-title" content="Gamerlito · Lucia and Jason · Manual">
   <script>
     if (location.protocol === 'https:' || location.protocol === 'http:') {
-      for (const [rel, href] of [['manifest', './app.webmanifest'], ['apple-touch-icon', './gamerlito-192.png']]) {
+      for (const [rel, href] of [['manifest', './app.webmanifest?v=7c7c0270bfc9'], ['apple-touch-icon', './gamerlito-192.png']]) {
         const link = document.createElement('link');
         link.rel = rel;
         link.href = href;
@@ -19,7 +19,7 @@
       }
     }
   </script>
-  <title>Roblox · Gamerlito · Lucía y Jason · Manual</title>
+  <title>Roblox · Gamerlito · Lucia and Jason · Manual</title>
   <style>
     *{box-sizing:border-box}
     html,body{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:#101115}
@@ -389,10 +389,10 @@
 
     #game-hud .gh-hidden-title{filter:blur(6px);user-select:none}
   </style>
-<script src="vendor/hls.light.min.js"></script>
-<link rel="stylesheet" href="duo.css">
-<script src="timeline.js"></script>
-<script src="game-stream.js"></script>
+<script src="vendor/hls.light.min.js?v=3ff29c965f23"></script>
+<link rel="stylesheet" href="duo.css?v=99f6c6cbe51d">
+<script src="timeline.js?v=9ba02aa8ec59"></script>
+<script src="game-stream.js?v=5c7c43f83ae5"></script>
 </head>
 <body data-duo-mode="manual">
   <main id="launcher" aria-label="Roblox experience launcher">
@@ -436,9 +436,9 @@
       <button type="button" class="gh-tool" data-gh="audio" title="Audio settings" aria-label="Audio settings"><i class="gh-glyph gh-audio-glyph"></i></button>
     </div>
   </div>
-  <div class="duo-transport" aria-label="Reproducción">
-    <button type="button" data-gh="playback" aria-label="Pausar el clip" title="Pausar (P)" aria-keyshortcuts="P" class="gh-tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="duo-pause" d="M7 4h3v16H7zm7 0h3v16h-3z"/><path class="duo-play" d="M6 3.5 20 12 6 20.5z"/></svg></button>
-    <button type="button" data-gh="replay" aria-label="Repetir el clip" title="Repetir desde el inicio (R)" aria-keyshortcuts="R" class="gh-tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 5v5h5M4.3 10a8 8 0 1 1 .8 6"/></svg></button>
+  <div class="duo-transport" role="group" aria-label="Playback controls">
+    <button type="button" data-gh="playback" aria-label="Pause playback" title="Pause (P)" aria-keyshortcuts="P" class="gh-tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="duo-pause" d="M7 4h3v16H7zm7 0h3v16h-3z"/><path class="duo-play" d="M6 3.5 20 12 6 20.5z"/></svg></button>
+    <button type="button" data-gh="replay" aria-label="Restart the clip" title="Restart from the beginning (R)" aria-keyshortcuts="R" class="gh-tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 5v5h5M4.3 10a8 8 0 1 1 .8 6"/></svg></button>
   </div>
   <div class="gh-quick" hidden aria-label="Experience controls">
     <button type="button" data-gh="settings">Settings</button>
@@ -453,8 +453,8 @@
     </div>
     <form class="gh-chat-form"><input type="text" maxlength="180" autocomplete="off" placeholder="Tap here to chat" aria-label="Message"><button type="submit" aria-label="Send message" title="Send message">➤</button></form>
   </section>
-  <div class="gh-stick" role="group" aria-label="Mover el encuadre" title="Mover el encuadre (WASD)"><span></span></div>
-  <button type="button" class="gh-jump" data-gh="jump" aria-label="Avanzar cinco segundos" title="Avanzar 5 s (Espacio)"><span></span></button>
+  <div class="gh-stick" role="group" aria-label="Pan the view" title="Pan the view (WASD)"><span></span></div>
+  <button type="button" class="gh-jump" data-gh="jump" aria-label="Skip ahead 5 seconds" title="Skip ahead 5 seconds (Space)"><span></span></button>
   <button type="button" class="gh-scene-action" data-gh="act" hidden aria-keyshortcuts="E">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg><i class="gh-action-glyph" aria-hidden="true" hidden></i><span></span>
   </button>
@@ -497,10 +497,10 @@
   
 
 
-  <script src="join.js"></script>
-<script src="player.js"></script>
-<script src="hud.js"></script>
-<script src="demo.js"></script>
-<script src="launcher.js"></script>
+  <script src="join.js?v=01368079ef18"></script>
+<script src="player.js?v=7c064f4cf3f2"></script>
+<script src="hud.js?v=77a4474f4b51"></script>
+<script src="demo.js?v=72a275d08974"></script>
+<script src="launcher.js?v=c075e37b4b26"></script>
 </body>
 </html>

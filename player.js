@@ -265,7 +265,7 @@
   }
   function currentAction() {
     if(phase!=='playing') return null;
-    return sceneActions.find(cue=>cue.t>footage.currentTime+.35) || {t:0,label:"Repetir el recorrido"};
+    return sceneActions.find(cue=>cue.t>footage.currentTime+.35) || {t:0,label:"Replay the clip"};
   }
   function syncAction() {
     const label=currentAction()?.label || null;

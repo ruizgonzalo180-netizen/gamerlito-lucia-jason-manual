@@ -1,6 +1,6 @@
 {
   "id": "./",
-  "name": "Gamerlito · Lucía y Jason · Manual",
+  "name": "Gamerlito · Lucia and Jason · Manual",
   "short_name": "Gamerlito Manual",
   "start_url": "./",
   "scope": "./",
@@ -24,5 +24,6 @@
       "type": "image/png",
       "purpose": "any"
     }
-  ]
+  ],
+  "lang": "en-US"
 }
