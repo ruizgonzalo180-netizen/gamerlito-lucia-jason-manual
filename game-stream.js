@@ -1,44 +1,72 @@
-/* Local HLS playback for the complete recording. The cover and studio ident use native MP4. */
+/* The two single-rendition playlists contain the same recording, audio and timeline. */
 function createGameStream(video, onReady, onFailure) {
-  const master = 'game/master.m3u8';
-  const mobile = 'game/mobile/index.m3u8';
+  const renditions = {
+    original:{url:'game/qhd/index.m3u8', height:1440, codec:'avc1.4d4033'},
+    '720p':{url:'game/mobile/index.m3u8', height:720, codec:'avc1.640028'}
+  };
   const nativeHls = Boolean(video.canPlayType('application/vnd.apple.mpegurl'));
   const useHlsJs = window.Hls && Hls.isSupported() &&
     !(nativeHls && navigator.vendor === 'Apple Computer, Inc.');
-  let state = 'idle';
-  let revision = 0;
-  let player = null;
-  let aborter = null;
-  let objectUrl = null;
-  let resumeAt = 0;
-  let useMobile = false;
+  let state = 'idle', revision = 0;
+  let preferred = 'original', active = 'original', lastStatus = '';
+  let player = null, aborter = null, objectUrl = null;
+  let resumeAt = 0, freeze = null;
 
-  function preferOriginal() {
-    const net = navigator.connection;
-    if (net?.saveData || /^(slow-2g|2g|3g)$/.test(net?.effectiveType)) return false;
-    const width = window.innerWidth, height = window.innerHeight;
-    return width >= height && width * (window.devicePixelRatio || 1) >= 1600;
+  function position() {
+    return state === 'ready' && Number.isFinite(video.currentTime) ? video.currentTime : resumeAt;
+  }
+  function qualityStatus() {
+    if (state === 'idle') return 'Available during gameplay';
+    if (state === 'failed') return 'Video unavailable';
+    if (state === 'loading' || !video.videoHeight) return 'Loading '+renditions[active].height+'p…';
+    return video.videoHeight+'p · 60 fps'+(preferred !== active ? ' (fallback)' : '');
+  }
+  function announce() {
+    const value = qualityStatus();
+    if (value !== lastStatus) {
+      lastStatus = value;
+      video.dispatchEvent(new Event('gamequalitychange'));
+    }
   }
 
+  function clearFreeze() {
+    if (freeze) freeze.remove();
+    freeze=null;
+  }
+  function freezePicture() {
+    if (freeze || video.hidden || video.readyState < 2 || !video.videoWidth) return;
+    const frame=document.createElement('canvas');
+    frame.width=video.videoWidth; frame.height=video.videoHeight;
+    const ctx=frame.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video,0,0);
+    window.DuoDisplay?.maskCapture(ctx,video,0,0,frame.width,frame.height);
+    frame.style.objectFit=getComputedStyle(video).objectFit;
+    frame.style.transform=video.style.transform;
+    frame.setAttribute('aria-hidden','true');
+    video.after(frame);
+    freeze=frame;
+  }
+  function revealFrame() {
+    if (state==='ready' && !video.seeking && video.readyState>=2) clearFreeze();
+  }
   function release() {
     revision++;
-    state = 'idle';
-    if (aborter) aborter.abort();
-    aborter = null;
+    state='idle';
+    aborter?.abort(); aborter=null;
     if (player) player.destroy();
-    player = null;
+    player=null;
     if (video.hasAttribute('src')) {
       video.removeAttribute('src');
       video.load();
     }
     if (objectUrl) URL.revokeObjectURL(objectUrl);
-    objectUrl = null;
+    objectUrl=null;
   }
 
-  // Older MP4 browsers without HLS or MediaSource can play the same fragmented
-  // H.264 file after the complete init segment and media fragments are loaded.
-  async function loadAsFile(signal) {
-    const playlist = new URL(mobile, document.baseURI);
+  // Browsers with only progressive MP4 support can assemble a single rendition locally.
+  async function loadAsFile(url, signal) {
+    const playlist = new URL(url, document.baseURI);
     const response = await fetch(playlist, {signal});
     if (!response.ok) throw new Error('Playlist unavailable');
     const text = await response.text();
@@ -53,82 +81,99 @@ function createGameStream(video, onReady, onFailure) {
     }
     return new Blob(buffers, {type:'video/mp4'});
   }
-
+  function supportsOriginal() {
+    const mime='video/mp4; codecs="'+renditions.original.codec+'"';
+    if (useHlsJs) {
+      const mediaSource=Hls.getMediaSource?.() || window.MediaSource || window.ManagedMediaSource;
+      return !mediaSource?.isTypeSupported || mediaSource.isTypeSupported(mime);
+    }
+    return nativeHls || Boolean(video.canPlayType(mime));
+  }
   function fail(id) {
-    if (id !== revision || state === 'idle' || state === 'failed') return;
-    resumeAt = video.currentTime || resumeAt;
-    if (!useMobile && (useHlsJs || nativeHls)) {
+    if (id!==revision || state==='idle' || state==='failed') return;
+    resumeAt=position();
+    if (active==='original') {
+      freezePicture();
       release();
-      useMobile = true;
-      load();
+      load('720p');
     } else {
-      state = 'failed';
+      state='failed';
+      announce();
       onFailure();
     }
   }
-
-  function load() {
-    const id = ++revision;
-    state = 'loading';
-    const url = useMobile ? mobile : master;
+  function load(quality) {
+    const id=++revision;
+    active=quality==='original' && !supportsOriginal() ? '720p' : quality;
+    const {url}=renditions[active];
+    state='loading';
+    announce();
     if (useHlsJs) {
-      player = new Hls({autoStartLoad:false, maxBufferLength:16, backBufferLength:16});
-      player.on(Hls.Events.MANIFEST_PARSED, (_, {levels}) => {
-        const best = levels.length - 1;
-        player.startLevel = preferOriginal() ? best : 0;
-        player.autoLevelCapping = preferOriginal() ? -1 : 0;
-        player.startLoad();
-      });
+      player=new Hls({startPosition:resumeAt, maxBufferLength:16, backBufferLength:16});
       player.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) fail(id); });
       player.loadSource(url);
       player.attachMedia(video);
     } else if (nativeHls) {
-      video.src = useMobile || !preferOriginal() ? mobile : master;
+      video.src=url;
       video.load();
     } else if (video.canPlayType('video/mp4')) {
-      aborter = new AbortController();
-      loadAsFile(aborter.signal).then(blob => {
-        if (id !== revision) return;
-        objectUrl = URL.createObjectURL(blob);
-        video.src = objectUrl;
-      }).catch(() => fail(id));
+      aborter=new AbortController();
+      loadAsFile(url, aborter.signal).then(blob=>{
+        if (id!==revision) return;
+        objectUrl=URL.createObjectURL(blob);
+        video.src=objectUrl;
+      }).catch(()=>fail(id));
     } else {
       fail(id);
     }
   }
-
-  window.addEventListener('resize', () => {
-    if (player?.levels.length) player.autoLevelCapping = preferOriginal() ? -1 : 0;
-  });
-  video.addEventListener('loadedmetadata', () => {
-    if (state !== 'loading') return;
-    state = 'ready';
-    if (resumeAt > 0) {
-      video.currentTime = resumeAt;
-      resumeAt = 0;
+  video.addEventListener('loadedmetadata',()=>{
+    if (state!=='loading') return;
+    if (resumeAt>0) {
+      const end=Number.isFinite(video.duration) ? Math.max(0,video.duration-.015) : resumeAt;
+      video.currentTime=Math.min(end,resumeAt);
     }
+    state='ready';
+    announce();
     onReady();
   });
-  video.addEventListener('error', () => {
-    if (video.error && (!useHlsJs || !player)) fail(revision);
-  });
+  for (const event of ['loadeddata','seeked','playing','timeupdate']) video.addEventListener(event,revealFrame);
+  video.addEventListener('resize',announce);
+  video.addEventListener('error',()=>{ if (video.error) fail(revision); });
 
   return {
     prepare() {
-      if (state === 'idle') load();
-      if (state === 'failed') onFailure();
-      return state === 'ready';
+      if (state==='idle') load(preferred);
+      if (state==='failed') onFailure();
+      return state==='ready';
+    },
+    setQuality(value) {
+      if ((value!=='original' && value!=='720p') || value===preferred) return;
+      preferred=value;
+      if (state==='idle') return;
+      if (state!=='failed' && value===active) { announce(); return; }
+      resumeAt=position();
+      freezePicture();
+      release();
+      load(value);
+    },
+    preferredQuality:()=>preferred,
+    qualityStatus, position,
+    restart() {
+      resumeAt=0;
+      if (state==='ready') video.currentTime=0;
     },
     retry() {
-      if (state === 'failed' || video.error) {
-        resumeAt = video.currentTime || resumeAt;
+      if (state==='failed' || video.error) {
+        resumeAt=position();
         release();
       }
     },
     reset() {
-      if (state !== 'idle') release();
-      useMobile = false;
-      resumeAt = 0;
+      if (state!=='idle') release();
+      clearFreeze();
+      resumeAt=0;
+      announce();
     }
   };
 }

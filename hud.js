@@ -16,14 +16,14 @@
   function store(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
   }
-  const choices = { rate: [0.75,1,1.25,1.5], fit: ["cover","contain"], sensitivity: [0.55,1,1.6] };
+  const choices = { rate: [0.75,1,1.25,1.5], fit: ["cover","contain"], sensitivity: [0.55,1,1.6], quality: ["original","720p"] };
   const currentPrefs = load(prefsKey,null);
   const saved = currentPrefs || {...load(`gamerlito.${document.body.dataset.duoMode}.lucia-jason.hud.prefs.v1`,{}),fit:"cover"};
-  const settings = { volume: 0.65, feedback: false, rate: 1, fit: "cover", sensitivity: 1 };
+  const settings = { volume: 0.65, feedback: false, rate: 1, fit: "cover", sensitivity: 1, quality: "original" };
   for (const [key, values] of Object.entries(choices)) if (values.includes(saved?.[key])) settings[key] = saved[key];
   if (Number.isFinite(saved?.volume)) settings.volume = Math.min(1, Math.max(0, saved.volume));
   settings.feedback = saved?.feedback === true;
-  if(!currentPrefs) store(prefsKey,settings);
+  if(!choices.quality.includes(currentPrefs?.quality)) store(prefsKey,settings);
   let reports = load(reportsKey, []);
   if (!Array.isArray(reports)) reports = [];
   let active = false, tab = "people", dialog = "", chatTab = "here", view = "grid", stage = "launch";
@@ -52,7 +52,13 @@
   function applySettings() {
     player("setVolume", settings.volume); player("setRate",settings.rate);
     player("setFit",settings.fit); player("setSensitivity",settings.sensitivity);
+    player("setQuality",settings.quality);
   }
+  function updateQualityStatus() {
+    const line = $("[data-quality-status]");
+    if (line) line.textContent = player("qualityStatus") || "Ready on game entry";
+  }
+  document.getElementById("game-footage").addEventListener("gamequalitychange",updateQualityStatus);
   function toast(message) {
     clearTimeout(toastTimer);
     $(".gh-toast").textContent=message; $(".gh-toast").hidden=false;
@@ -154,6 +160,8 @@
     return '<h2>Audio</h2><label class="gh-row"><span>Volume <small class="gh-vol-value">'+Math.round(settings.volume*100)+'%</small></span><input aria-label="Volume" type="range" min="0" max="100" value="'+Math.round(settings.volume*100)+'" data-pref="volume"></label>'+
       picker("feedback","Interface sounds",[[false,"Off"],[true,"On"]])+
       '<h2 style="margin-top:1em">Experience</h2>'+
+      picker("quality","Video quality",[["original","Original (1440p, 60 fps)"],["720p","720p (60 fps)"]])+
+      '<p role="status" data-quality-status></p>'+
       picker("rate","Playback speed",choices.rate.map(v=>[v,v+"×"]))+
       picker("fit","Display",[['cover','Fill screen'],['contain','Fit to screen']])+
       picker("sensitivity","Camera sensitivity",[[.55,"Low"],[1,"Normal"],[1.6,"High"]]);
@@ -193,6 +201,7 @@
       content.innerHTML='<h2>Capture '+(selectedShot+1)+'</h2><img class="gh-shot-preview" src="'+shots[selectedShot]+'" alt="Captured frame"><div class="gh-actions">'+actionButton("download","Save image",true)+actionButton("delete-shot","Delete")+actionButton("back","Back")+'</div>';
     } else {
       content.innerHTML=({people:person,settings:settingsBody,gallery,report,help}[tab]||person)();
+      if (tab==="settings") updateQualityStatus();
     }
     content.scrollTop=0;
   }
@@ -218,6 +227,7 @@
     if (key==="volume") settings.volume=Math.max(0,Math.min(1,Number(input.value)/100));
     else if (key==="feedback") settings.feedback=input.value==="true";
     else if (key==="fit") settings.fit=input.value==="contain"?"contain":"cover";
+    else if (key==="quality" && choices.quality.includes(input.value)) settings.quality=input.value;
     else if (choices[key]?.includes(Number(input.value))) settings[key]=Number(input.value);
     else return;
     if(key==="volume") {
@@ -360,5 +370,6 @@
   });
   window.addEventListener("blur",()=>{ if(active) stopMovement(); });
   document.addEventListener("visibilitychange",()=>{ if(active&&document.hidden) stopMovement(); });
+  player("setQuality",settings.quality);
   window.GameHUD={mount,reset,setStage,setAction,unmount,canAct,stickInUse:()=>selectedPointer!==null || keys.size>0,isBlocking:()=>active&&(!shade.hidden||isTyping(document.activeElement)),openMenu:showMenu};
 })();

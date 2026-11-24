@@ -8,7 +8,10 @@
   const footage = document.querySelector('#game-footage');
   const videos = [intro,ident,footage];
   const gameStream = createGameStream(footage,
-    () => { if (phase==='playing' && !pauses.size) startVideo(footage); },
+    () => {
+      syncAudio(); sprint(sprintHeld);
+      if (phase==='playing' && !pauses.size) startVideo(footage);
+    },
     () => { if (phase==='playing') showFeedback('The clip could not load.','Retry'); }
   );
   const feedback = document.querySelector('#playback-message');
@@ -125,7 +128,7 @@
     ident.pause();
     setPhase('playing');
     footage.hidden=false;
-    if(rewind && footage.readyState>=1) footage.currentTime=0;
+    if(rewind) gameStream.restart();
     footage.loop=true;
     sprint(false);
     syncAudio();
@@ -192,8 +195,7 @@
     const token=generation;
     setTimeout(()=>{
       if(token!==generation || phase==='home') return;
-      const small = window.innerWidth < 768 || navigator.connection?.saveData;
-      const suffix = small ? '-720' : '';
+      const suffix = gameStream.preferredQuality()==='720p' ? '-720' : '';
       intro.src='intro/cover'+suffix+'.mp4';
       intro.preload='auto'; intro.load();
       const prepareIdent=()=>{
@@ -265,7 +267,7 @@
   }
   function currentAction() {
     if(phase!=='playing') return null;
-    return sceneActions.find(cue=>cue.t>footage.currentTime+.35) || {t:0,label:"Replay the clip"};
+    return sceneActions.find(cue=>cue.t>gameStream.position()+.35) || {t:0,label:"Replay the clip"};
   }
   function syncAction() {
     const label=currentAction()?.label || null;
@@ -326,6 +328,14 @@
   for(const video of videos){
     video.addEventListener('playing',()=>showDecodedFrame(video));
     video.addEventListener('error',()=>{
+      if(video!==footage && video.error && /\/(cover|ident)\.mp4$/.test(video.currentSrc)) {
+        const time=video.currentTime;
+        if(time>0) video.addEventListener('loadedmetadata',()=>{video.currentTime=time;},{once:true});
+        video.src=video.currentSrc.replace(/\.mp4$/,'-720.mp4');
+        video.load();
+        if(video===activeVideo()) startVideo(video);
+        return;
+      }
       if(video!==footage && video===activeVideo())showFeedback('The clip could not load.','Retry');
     });
   }
@@ -352,6 +362,7 @@
     restart:()=>{ if(phase!=='home'){ pauses.delete('menu');pauses.delete('user');beginFootage(true); } },
     togglePlayback:()=>{ if(phase==='playing') pauses.has('user') ? wake('user') : suspend('user'); },
     get userPaused(){return pauses.has('user');},
+    setQuality:gameStream.setQuality, qualityStatus:gameStream.qualityStatus,
     setVolume, setRate:value=>{rate=limit(Number(value)||1,.25,3);sprint(sprintHeld);},
     setFit:value=>{fit=value==='cover'?'cover':'contain';footage.style.objectFit=fit; resetCamera();},
     setSensitivity:value=>{sensitivity=limit(Number(value)||1,.1,3);},
